@@ -1,0 +1,35 @@
+os:
+  - linux
+
+env:
+  - WINEARCH=win32
+  - WINEARCH=""
+
+cache: apt
+
+before_install:
+  - "export DISPLAY=:99.0"
+  - "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -ac -screen 0 800x600x16"
+
+before_script:
+  - sudo add-apt-repository -y ppa:pipelight/stable
+  - sudo apt-get update -qq
+  - sudo apt-get install -y --install-recommends wine-staging wine-staging-compat subversion
+  - wget https://raw.githubusercontent.com/Jactry/msys2_deb/master/msys2-scripts_20150725_i386.deb
+  - sudo dpkg -i msys2-scripts_20150725_i386.deb
+
+language: c
+
+compiler:
+  - gcc
+
+script:
+  - srcdir=~/src
+  - _realname=shishi
+  - pkgbuild_repo=https://github.com/Alexpux/MINGW-packages/trunk/mingw-w64-shishi-git
+  - svn co ${pkgbuild_repo} ${srcdir}
+  - ln -svf ${PWD} ${srcdir}/${_realname}
+  - cp ${srcdir}/PKGBUILD ~
+  - msys2-prepare
+  - msys2-wrapper "pacman -S --needed --noconfirm mingw-w64-i686-toolchain"
+  - msys2-wrapper "makepkg-mingw -s --noconfirm --noprogressbar --noextract --skippgpcheck -f"
